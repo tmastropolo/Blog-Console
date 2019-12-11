@@ -93,27 +93,12 @@ namespace BlogsConsole
                         {
                             if (db.Blogs.Any(b => b.BlogId == BlogId))
                             {
-                                Post post = new Post();
-                                post.BlogId = BlogId;
-                                Console.WriteLine("Enter the Post title");
-                                post.Title = Console.ReadLine();
-                                Console.WriteLine("Enter the Post content");
-                                post.Content = Console.ReadLine();
-
-                                ValidationContext context = new ValidationContext(post, null, null);
-                                List<ValidationResult> results = new List<ValidationResult>();
-
-                                var isValid = Validator.TryValidateObject(post, context, results, true);
-                                if (isValid)
+                                Post post = InputPost(db);
+                                if (post != null)
                                 {
-                                    logger.Error("Post title cannot be null");
-                                }
-                                else
-                                {
-                                    foreach (var result in results)
-                                    {
-                                        logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
-                                    }
+                                    post.BlogId = BlogId;
+                                    db.AddPost(post);
+                                    logger.Info("Post added - {title}", post.Title);
                                 }
                             }
                             else
@@ -204,6 +189,31 @@ namespace BlogsConsole
             logger.Info("Program ended");
         }
 
+        public static Post InputPost(BloggingContext db)
+        {
+            Post post = new Post();
+            Console.WriteLine("Enter the Post title");
+            post.Title = Console.ReadLine();
+            Console.WriteLine("Enter the Post content");
+            post.Content = Console.ReadLine();
+
+            ValidationContext context = new ValidationContext(post, null, null);
+            List<ValidationResult> results = new List<ValidationResult>();
+
+            var isValid = Validator.TryValidateObject(post, context, results, true);
+            if (isValid)
+            {
+                return post;
+            }
+            else
+            {
+                foreach (var result in results)
+                {
+                    logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                }
+            }
+            return null;
+        }
 
         public static Post GetPost(BloggingContext db)
         {
