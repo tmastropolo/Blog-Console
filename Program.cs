@@ -52,7 +52,18 @@ namespace BlogsConsole
                     {
                         var db = new BloggingContext();
 
-                        Console.WriteLine("Create post");
+                        Console.WriteLine("Create post\n");
+
+                        var query = db.Blogs.OrderBy(b => b.Name);
+                        int number =0;
+                        Console.WriteLine("All blogs in the database:");
+                        foreach (var item in query)
+                        {
+                            number++;
+                            Console.WriteLine(number +") " + item.Name);
+                        }
+
+
                     }
                 } while (choice == 4);
                 }
