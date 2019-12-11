@@ -20,5 +20,10 @@ namespace BlogsConsole.Models
             this.Posts.Add(post);
             this.SaveChanges();
         }
+        public void DeletePost(Post post)
+        {
+            this.Posts.Remove(post);
+            this.SaveChanges();
+        }
     }
 }

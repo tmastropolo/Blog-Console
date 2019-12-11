@@ -23,6 +23,8 @@ namespace BlogsConsole
                     Console.WriteLine("2) Add Blog");
                     Console.WriteLine("3) Create Post");
                     Console.WriteLine("4) Display Posts");
+                    Console.WriteLine("5) Delete Post");
+                    Console.WriteLine("6) Edit Post");
                     Console.WriteLine("Enter q to quit");
                     choice = Console.ReadLine();
                     Console.Clear();
@@ -95,16 +97,23 @@ namespace BlogsConsole
                                 post.BlogId = BlogId;
                                 Console.WriteLine("Enter the Post title");
                                 post.Title = Console.ReadLine();
-                                if (post.Title.Length == 0)
+                                Console.WriteLine("Enter the Post content");
+                                post.Content = Console.ReadLine();
+
+                                ValidationContext context = new ValidationContext(post, null, null);
+                                List<ValidationResult> results = new List<ValidationResult>();
+
+                                var isValid = Validator.TryValidateObject(post, context, results, true);
+                                if (isValid)
                                 {
                                     logger.Error("Post title cannot be null");
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Enter the Post content");
-                                    post.Content = Console.ReadLine();
-                                    db.AddPost(post);
-                                    logger.Info("Post added - {title}", post.Title);
+                                    foreach (var result in results)
+                                    {
+                                        logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                                    }
                                 }
                             }
                             else
@@ -162,6 +171,29 @@ namespace BlogsConsole
                             logger.Error("Invalid Blog Id");
                         }
                     }
+                    else if (choice == "5")
+                    {
+                        // delete post
+                        Console.WriteLine("Choose the post to delete:");
+                        var db = new BloggingContext();
+                        var post = GetPost(db);
+                        if (post != null)
+                        {
+                            db.DeletePost(post);
+                            logger.Info("Post (id: {postid}) deleted", post.PostId);
+                        }
+                    }
+                    else if (choice == "6")
+                    {
+                        // edit post
+                        Console.WriteLine("Choose the post to edit:");
+                        var db = new BloggingContext();
+                        var post = GetPost(db);
+                        if (post != null)
+                        {
+                            // TODO: input post
+                        }
+                    }
                     Console.WriteLine();
                 } while (choice.ToLower() != "q");
             }
@@ -170,6 +202,39 @@ namespace BlogsConsole
                 logger.Error(ex.Message);
             }
             logger.Info("Program ended");
+        }
+
+
+        public static Post GetPost(BloggingContext db)
+        {
+            // display all blogs & posts
+            // force eager loading of Posts
+            var blogs = db.Blogs.Include("Posts").OrderBy(b => b.Name);
+            foreach (Blog b in blogs)
+            {
+                Console.WriteLine(b.Name);
+                if (b.Posts.Count() == 0)
+                {
+                    Console.WriteLine($"  <no posts>");
+                }
+                else
+                {
+                    foreach (Post p in b.Posts)
+                    {
+                        Console.WriteLine($"  {p.PostId}) {p.Title}");
+                    }
+                }
+            }
+            if (int.TryParse(Console.ReadLine(), out int PostId))
+            {
+                Post post = db.Posts.FirstOrDefault(p => p.PostId == PostId);
+                if (post != null)
+                {
+                    return post;
+                }
+            }
+            logger.Error("Invalid Post Id");
+            return null;
         }
     }
 }
